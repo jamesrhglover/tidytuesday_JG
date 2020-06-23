@@ -1,0 +1,206 @@
+---
+title: "Tidy Tuesday 2020-04-28 Broadway Shows"
+author: "James Glover"
+date: "29/04/2020"
+output: html_document
+metrics:
+  usdgross:
+    title: Total Gross USD
+    description: Not Adjusted for Inflation
+  avgticketprice:
+    title: Average Ticket Price USD
+    description: Not Adjusted for Inflation
+  pctcapacity: 
+    title: Percent Capacity
+    description: Average across weeks in the time period
+dimensions:
+  show: 
+    title: Show
+    description: Title of Show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+
+#install.packages("devtools")
+#devtools::install_github("thebioengineer/tidytuesdayR")
+library(tidyverse)
+library(tidymetrics)
+library(scales)
+
+# install.packages("remotes")
+# remotes::install_github("ramnathv/tidymetrics")
+
+# Get the Data
+
+#tuesdata <- tidytuesdayR::tt_load('2020-04-28')
+#tuesdata <- tidytuesdayR::tt_load(2020, week = 18)
+
+grosses <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-04-28/grosses.csv', guess_max = 40000)
+
+
+# all groups of data
+#grosses <- tuesdata$grosses
+#synopses <- tuesdata$synopses
+#cpi <- tuesdata$cpi
+#starts <- tuesdata$`pre-1985-starts`
+
+
+# set the theme
+theme_set(theme_light())
+```
+
+
+
+
+``` {r}
+# dashboard
+
+#grosses %>% filter(str_detect(show, "Potter")) %>% distinct(show)
+#grosses %>% group_by(show) %>% summarize( weekly_gross = sum(weekly_gross)) %>% arrange (desc(weekly_gross))
+
+shows_summarised <- grosses %>%
+  filter(show %in% 
+           c(#'Hamilton',
+             #'The Lion King',
+             #'Les Miserables',
+             #'Rent',
+             #'The Phantom of the Opera',
+             #'Wicked', 
+             #'Cats', 
+             #'Harry Potter and the Cursed Child, Parts One and Two',
+             #'Chicago',
+             'The Book of Mormon'
+             )) %>% 
+  #mutate(show = str_remove(show, "\\, Parts.*")) %>%
+  rename(date = week_ending) %>%
+  cross_by_dimensions(show) %>%
+  cross_by_periods( #periods = c(), # what we need if we just want the rolling windowed fuction below
+                    c("month","quarter","year")
+                    #,windows = c(28)
+                    ) %>% # rolling dates
+  summarize(usdgross = sum(weekly_gross),
+            avgticketprice = mean(avg_ticket_price),
+            #nb_seats_sold = sum(seats_sold),
+            pctcapacity = mean(pct_capacity),
+            #performances = sum(performances)
+            ) #%>%
+    #ungroup()
+  
+
+```
+``` {r}
+
+# use_metrics_scaffold(shows_summarised)
+
+show_metrics <- create_metrics(shows_summarised)
+
+shows_summarised
+
+
+
+```
+```{r}
+
+shows_summarised %>%
+  filter( period == 'quarter',
+          show != 'All') %>%
+  ggplot(aes(date, usd_gross, fill = show)) + 
+  geom_col() + 
+  scale_y_continuous(labels = dollar_format())+
+  expand_limits( y = 0) + 
+  labs (x = "time",
+        y = "usd gross",
+        colour = "period")
+
+
+shows_summarised %>%
+  filter( period == 'quarter',
+          show != 'All') %>%
+  ggplot(aes(date, avg_ticket_price, color = show)) + 
+  geom_line() + 
+  scale_y_continuous(labels = dollar_format())+
+  expand_limits( y = 0) +
+  labs (x = "time",
+        y = "ticket price",
+        colour = "period")
+
+
+```
+
+
+```{r}
+grosses <- tuesdata$grosses
+
+grosses %>%
+  filter(show == 'Hamilton') %>%
+  ggplot(aes(week_ending, weekly_gross)) + 
+  #geom_point() +
+  geom_line() +
+  scale_y_continuous( labels = scales::dollar)
+  expand_limits( y = 0)
+
+  #weekly_gross
+  #avg_ticket_price
+
+grosses %>%
+  filter(show %in%  c('Hamilton','Cats','The Lion King')) %>%
+  ggplot(aes(week_ending, weekly_gross, color = show)) + 
+  #geom_point() +
+  geom_line() +
+  scale_y_continuous( labels = scales::dollar) + 
+  expand_limits( y = 0)
+
+```
+
+``` {r}
+lion_king_summarised <- grosses %>%
+  filter(show %in% c('Hamilton')) %>%
+  rename(date = week_ending) %>%
+  cross_by_periods( #periods = c(), # what we need if we just want the rolling windowed fuction below
+                    c("month","quarter","year"),
+                    windows = c(28, 84, 365)) %>% # rolling dates
+  summarize(usd_gross = sum(weekly_gross),
+            avg_ticket_price = mean(avg_ticket_price),
+            nb_seats_sold = sum(seats_sold),
+            pct_capacity = mean(pct_capacity),
+            performances = sum(performances)
+            )
+  
+lion_king_summarised %>%
+  ggplot(aes(date, usd_gross, colour = period)) + 
+  geom_line()
+
+lion_king_summarised %>%
+  ggplot(aes(date, avg_ticket_price, colour = period)) + 
+  geom_line (size = 1, alpha = .5) +
+  scale_y_continuous(labels = dollar_format())+
+  expand_limits( y = 0) + labs (x = "time",
+                                y = "ticket price",
+                                colour = "period")
+
+
+
+lion_king_summarised %>%
+  ggplot(aes(date, pct_capacity, colour = period)) + 
+  geom_line (size = 1, alpha = .5) +
+  scale_y_continuous(labels = percent_format())+
+  expand_limits( y = 0) + 
+  labs (x = "time",
+        y = "capacity",
+        colour = "period")
+
+```
+
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
