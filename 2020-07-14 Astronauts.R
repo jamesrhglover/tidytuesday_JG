@@ -8,7 +8,7 @@ theme_set(theme_bw())
 
 library(ggdark)
 theme_set(dark_theme_gray())
-#invert_geom_defaults()
+invert_geom_defaults()
 # install.packages("ggthemes")
 library(ggthemes)
 
@@ -48,7 +48,7 @@ space_time <- astronauts %>%
     group_by(nationality) %>%
     summarise(total_hours = round(sum(hours_mission),0)) %>%
     arrange(desc(total_hours)) %>%
-    head(15)
+    head(9)
 
 space_time %>%
     mutate(nationality = case_when(nationality == 'U.S.S.R/Russia' ~ 'Russia',
@@ -76,6 +76,9 @@ space_time %>%
           #) +
     #scale_x_continuous( labels = scales::dollar) + 
     scale_y_continuous(expand = c(0, 0), limits = c(0, 750000), labels = scales::comma) +
+    scale_fill_brewer(palette="Set1") +
+    #scale_fill_brewer(palette="Blues") +
+    #scale_fill_brewer(direction = -1) + #theme_dark() +
     #expand_limits(x = 0) +
     labs(y = 'Total hours in Space', x = '',
          title = 'Which Country has had the most time in space',
