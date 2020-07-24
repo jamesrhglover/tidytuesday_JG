@@ -85,12 +85,18 @@ animal_outcomes %>%
 # We need to proportion the rescued number and those that had to be put down
 
 animal_outcomes %>%
-    select(Total, year, animal_type , outcome) %>%
     filter(animal_type %in% c('Dogs')) %>%
-    #filter(outcome == 'Euthanized') %>%
+    select(Total, year, outcome) %>%
+    mutate(
+        outcome = case_when(
+            outcome %in% c("Rehomed", "Reclaimed") ~ "Rescued",
+            outcome == "Euthanized" ~ "Euthanized",
+            TRUE ~ "Other" )
+        ) %>%
     group_by(year, outcome) %>%
     summarise(Total = sum(Total)) %>%
-    ggplot(aes(year, Total, colour = outcome)) +
+    mutate(outcome_percent = round(100 * Total/sum(Total),1)) %>%
+    ggplot(aes(year, outcome_percent, colour = outcome)) +
     #geom_col() +
     geom_line() +
     labs(title = "Number of Animals Euthanized",
@@ -98,6 +104,76 @@ animal_outcomes %>%
          #y = "Number of animals ",
          color = "Animals")
 
+   
+library(gganimate)
+
+animal_outcomes %>%
+    filter(animal_type %in% c('Dogs')) %>%
+    select(Total, year, outcome) %>%
+    mutate(
+        outcome = case_when(
+            outcome %in% c("Rehomed", "Reclaimed") ~ "Rescued",
+            outcome == "Euthanized" ~ "Euthanized",
+            TRUE ~ "Other" )
+    ) %>%
+    group_by(year, outcome) %>%
+    summarise(Total = sum(Total)) %>%
+    mutate(outcome_percent = round(100 * Total/sum(Total),1)) %>%
+    ggplot(aes(year, outcome_percent, colour = outcome)) +
+    #geom_col() +
+    geom_line() +
+    labs(title = "Number of Animals Euthanized",
+         x = "Year",
+         #y = "Number of animals ",
+         color = "Animals") #+
+    #transition_reveal(year)
+
+
+library(ggimage)
+
+
+dog_image_link <- "https://github.com/jamesrhglover/tidytuesday_JG/blob/master/logo-silhouette-dog-png-favpng-vTErGHPSeJQZ252JaVtaSVdJw.jpg"
+
+
+animal_outcomes %>%
+    mutate(
+        image = dog_image_link
+    ) %>% 
+    filter(animal_type %in% c('Dogs')) %>%
+    select(Total, year, outcome, image) %>%
+    mutate(
+        outcome = case_when(
+            outcome %in% c("Rehomed", "Reclaimed") ~ "Rescued",
+            outcome == "Euthanized" ~ "Euthanized",
+            TRUE ~ "Other" )
+    ) %>%
+    group_by(year, outcome) %>%
+    summarise(Total = sum(Total)) %>%
+    mutate(outcome_percent = round(100 * Total/sum(Total),1)) %>%
+    ggplot(aes(year, outcome_percent, colour = outcome)) +
+    #geom_col() +
+    geom_line() #+
+    #geom_image(aes(image = image),
+               #size = 0.3) #+
+    #transition_reveal(time)
+
+
+
+labs(title = "Number of Animals Euthanized",
+     x = "Year",
+     #y = "Number of animals ",
+     color = "Animals") +
+    
+    
+    
+    
+    filter(id == 1) %>%
+    ggplot(aes(x = longitude, 
+               y = latitude)) +
+    geom_path() +
+    geom_image(aes(image = image),
+               size = 0.3) +
+    transition_reveal(time)
 
 
 
