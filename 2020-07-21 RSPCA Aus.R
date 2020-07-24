@@ -1,0 +1,105 @@
+# Tidy Tuesday - 21-07-2020
+
+# Completed 24-07-2020
+
+
+# Download data
+library(tidytuesdayR)
+library(tidyverse)
+theme_set(theme_light())
+theme_set(theme_dark())
+
+
+
+tt <- tt_load("2020-07-21")
+
+
+#animal_outcomes <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-21/animal_outcomes.csv')
+# animal_complaints <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-21/animal_complaints.csv')
+# brisbane_complaints <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-21/brisbane_complaints.csv')
+
+
+tt %>% map(glimpse)
+
+glimpse(tt$animal_outcomes)
+# Data around anaimals from RSBCA that either been rehomed, euthanised , other, transfered
+
+
+# tidy and organise data, instock becomes in care, humanised terms
+animal_outcomes <- tt$animal_outcomes %>%
+    mutate(outcome = fct_recode(outcome, "Currently In Care" = "In Stock"))
+
+
+# showing the outcomes over time 
+animal_outcomes %>%
+    select(Total, year, animal_type , outcome) %>%
+    group_by(year, animal_type) %>%
+    summarise(Total = sum(Total)) %>%
+    ggplot(aes(year, Total, colour = animal_type)) +
+    #geom_col() +
+    geom_line() +
+    labs(x = "Year",
+         y = "Number of animals",
+         color = "Outcome")
+
+# Wildlife has picked up in the last few years but mainly cats and dogs, let's keep all 3 and look at their outcomes
+
+
+animal_outcomes %>%
+    select(Total, year, animal_type , outcome) %>%
+    #filter(animal_type %in% c('Dogs','Cats', 'Wildlife')) %>%
+    filter(animal_type == 'Dogs') %>%
+    group_by(year, outcome) %>%
+    summarise(Total = sum(Total)) %>%
+    ggplot(aes(year, Total, colour = outcome)) +
+    #geom_col() +
+    geom_line() +
+    labs(x = "Year",
+         y = "Number of animals",
+         color = "Outcome")
+
+# There's been a big drop in the amount of animal's Euthanized, however this appears to be a drop in cat's and dogs only and there has been an increase in the euthanized numbers of wild animals
+# Hummmm, could they be calling cats and dogs, wild to exclude from the nice fluffy category?
+
+# Let's look at the numbers Euthanised
+
+animal_outcomes %>%
+    select(Total, year, animal_type , outcome) %>%
+    filter(animal_type %in% c('Dogs','Cats', 'Wildlife')) %>%
+    filter(outcome == 'Euthanized') %>%
+    group_by(year, animal_type) %>%
+    summarise(Total = sum(Total)) %>%
+    ggplot(aes(year, Total, colour = animal_type)) +
+    #geom_col() +
+    geom_line() +
+    labs(title = "Number of Animals Euthanized",
+         x = "Year",
+         #y = "Number of animals ",
+         color = "Animals")
+
+# Good that overall numbers are dropping off
+
+# Final presentation ----
+# Got to be dog's
+
+# We need to proportion the rescued number and those that had to be put down
+
+animal_outcomes %>%
+    select(Total, year, animal_type , outcome) %>%
+    filter(animal_type %in% c('Dogs')) %>%
+    #filter(outcome == 'Euthanized') %>%
+    group_by(year, outcome) %>%
+    summarise(Total = sum(Total)) %>%
+    ggplot(aes(year, Total, colour = outcome)) +
+    #geom_col() +
+    geom_line() +
+    labs(title = "Number of Animals Euthanized",
+         x = "Year",
+         #y = "Number of animals ",
+         color = "Animals")
+
+
+
+
+# animate
+
